@@ -29,6 +29,7 @@ class TcpServer(object):
         self.conn_num = conn_num
         self.time_out = time_out
         self.buf_size = buf_size
+        self.img_url = ''
 
     def start_server(self):
         server_socket = socket.socket()
@@ -49,7 +50,6 @@ class TcpServer(object):
             # 进行处理
             for fd, event in events:
                 event_socket = fd_to_socket.get(fd)
-                img_url = ''
                 if event_socket == server_socket:
                     # 有新连接
                     conn, address = server_socket.accept()
@@ -74,14 +74,14 @@ class TcpServer(object):
                             # 接收完毕
                             not_done = False
                     logging.info("上传完成。filename %s, filesize %d" % (file_name, file_size))
-                    img_url = 'qwe'
+                    self.img_url = ''
                     file.close()
                     epoll.modify(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     # 文件描述符可写
                     # 返回资源在服务器的地址
-                    event_socket.send(bytes(img_url, encoding='UTF-8'))
-                    logging.info("回传图片地址 %s 到客户端 %s." % (img_url, event_socket.getpeername()))
+                    event_socket.send(bytes(self.img_url, encoding='UTF-8'))
+                    logging.info("回传图片地址 %s 到客户端 %s." % (self.img_url, event_socket.getpeername()))
                     epoll.modify(fd, select.EPOLLIN)
                 elif event & select.EPOLLHUP:
                     # 文件描述符关闭
