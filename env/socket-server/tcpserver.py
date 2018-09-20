@@ -11,6 +11,8 @@ logging.basicConfig(level=logging.INFO,
                     filemode='a',
                     format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
                     )
+IMG_DIRECTORY = '/home/freesia_blog_edition2/env/app/blogimg/'
+DOMAIN_NAME = 'resource.fre3sia.site'
 
 
 class TcpServer(object):
@@ -63,8 +65,9 @@ class TcpServer(object):
                     file_size = event_socket.recv(self.buf_size)
                     recv_size = 0
                     not_done = True
-                    file_name = int(time.time())
-                    file = open(str(file_name), mode='a')
+                    file_name = str(int(time.time()))
+                    file_path = IMG_DIRECTORY + file_name
+                    file = open(file_path, mode='a')
                     while not_done:
                         # 文件数据二进制
                         data = event_socket.recv(self.buf_size)
@@ -73,8 +76,8 @@ class TcpServer(object):
                         if recv_size >= file_size:
                             # 接收完毕
                             not_done = False
-                    logging.info("上传完成。filename %s, filesize %d" % (file_name, file_size))
-                    self.img_url = ''
+                    logging.info("上传完成。file_path %s, file_size %d" % (file_path, file_size))
+                    self.img_url = DOMAIN_NAME + '/blogimg/' + file_name
                     file.close()
                     epoll.modify(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
