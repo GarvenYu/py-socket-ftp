@@ -67,19 +67,18 @@ class TcpServer(object):
                     not_done = True
                     file_name = str(int(time.time()))
                     file_path = IMG_DIRECTORY + file_name
-                    file = open(file_path, mode='a')
-                    while not_done:
-                        # 文件数据二进制
-                        data = event_socket.recv(self.buf_size)
-                        recv_size += len(data)
-                        file.write(data)
-                        if recv_size >= file_size:
-                            # 接收完毕
-                            not_done = False
-                    logging.info("上传完成。file_path %s, file_size %d" % (file_path, file_size))
-                    self.img_url = DOMAIN_NAME + '/blogimg/' + file_name
-                    file.close()
-                    epoll.modify(fd, select.EPOLLOUT)
+                    with open(file_path, mode='a') as file:
+                        while not_done:
+                            # 文件数据二进制
+                            data = event_socket.recv(self.buf_size)
+                            recv_size += len(data)
+                            file.write(data)
+                            if recv_size >= file_size:
+                                # 接收完毕
+                                not_done = False
+                        logging.info("上传完成。file_path %s, file_size %d" % (file_path, file_size))
+                        self.img_url = DOMAIN_NAME + '/blogimg/' + file_name
+                        epoll.modify(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     # 文件描述符可写
                     # 返回资源在服务器的地址
