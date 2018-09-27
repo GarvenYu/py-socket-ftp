@@ -62,27 +62,28 @@ class TcpServer(object):
                 elif event & select.EPOLLIN:
                     # 文件描述符可读(对端数据传入)
                     # 文件大小
-                    file_size = event_socket.recv(self.buf_size)
+                    # file_size = event_socket.recv()
+                    file_size = 0
                     recv_size = 0
                     not_done = True
                     file_name = str(int(time.time()))
                     file_path = IMG_DIRECTORY + file_name
-                    with open(file_path, mode='a') as file:
-                        while not_done:
-                            # 文件数据二进制
-                            data = event_socket.recv(self.buf_size)
-                            recv_size += len(data)
-                            file.write(data)
-                            if recv_size >= file_size:
-                                # 接收完毕
-                                not_done = False
-                        logging.info("上传完成。file_path %s, file_size %d" % (file_path, file_size))
-                        self.img_url = DOMAIN_NAME + '/blogimg/' + file_name
+                    with open(file_path, mode='wb+') as file:
+                        # while not_done:
+                        # 文件数据二进制
+                        data = event_socket.recv(1024*1024*5)  # 5MB
+                        recv_size += len(data)
+                        file.write(data)
+                        # if recv_size >= file_size:
+                        # 接收完毕
+                        # not_done = False
+                        logging.info("上传完成。file_path %s, file_size %d" % (file_path, recv_size))
+                        self.img_url = DOMAIN_NAME + '/blogimg/' + file_name + '.png'
                         epoll.modify(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     # 文件描述符可写
                     # 返回资源在服务器的地址
-                    event_socket.send(bytes(self.img_url, encoding='UTF-8'))
+                    event_socket.send(self.img_url.encode(encoding='UTF-8'))
                     logging.info("回传图片地址 %s 到客户端 %s." % (self.img_url, event_socket.getpeername()))
                     epoll.modify(fd, select.EPOLLIN)
                 elif event & select.EPOLLHUP:
@@ -100,5 +101,5 @@ class TcpServer(object):
         server_socket.close(server_socket.fileno())
 
 
-tcpServer = TcpServer('', 8001, 10, 10)
+tcpServer = TcpServer('172.18.107.169', 8001, 10, 10, 1024)
 tcpServer.start_server()
