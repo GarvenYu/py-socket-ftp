@@ -59,11 +59,17 @@ class TcpServer(object):
                     # conn.setblocking(False)
                     epoll.register(conn.fileno(), select.EPOLLIN)
                     fd_to_socket[conn.fileno()] = conn
+                # elif event & select.EPOLLHUP:
+                #     # 文件描述符关闭
+                #     logging.info("客户端关闭")
+                #     epoll.unregister(fd)
+                #     fd_to_socket[fd].close()
+                #     del fd_to_socket[fd]
                 elif event & select.EPOLLIN:
                     # 文件描述符可读(对端数据传入)
                     # 文件大小
-                    file_size = event_socket.recv(self.buf_size)
-                    logging.info("文件大小 %d" % int(file_size.decode('UTF-8')))
+                    # file_size = event_socket.recv(self.buf_size)
+                    # logging.info("文件大小 %d" % int(file_size.decode('UTF-8')))
                     recv_size = 0
                     file_name = str(int(time.time())) + '.jpg'
                     file_path = IMG_DIRECTORY + file_name
@@ -71,25 +77,21 @@ class TcpServer(object):
                         while True:
                             # 文件数据二进制
                             data = event_socket.recv(self.buf_size)
-                            logging.info("接收文件 %d 字节.." % len(data))
                             recv_size += len(data)
                             file.write(data)
-                            logging.info("已经写入数据 %d 字节.." % recv_size)
-                            if len(data) == 0:
+                            if len(data) == 6:  # 客户端传finish
                                 # 接收完毕
                                 break
-                    logging.info("上传完成。file_path %s, file_size %s" % (file_path, file_size.decode('UTF-8')))
+                    logging.info("上传完成。文件路径 %s, 接收大小 %d" % (file_path, recv_size))
                     self.img_url = DOMAIN_NAME + '/blogimg/' + file_name
                     epoll.modify(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     # 文件描述符可写
                     # 返回资源在服务器的地址
+                    # 关闭连接
                     event_socket.send(self.img_url.encode(encoding='UTF-8'))
                     logging.info("回传图片地址 %s 到客户端 %s." % (self.img_url, event_socket.getpeername()))
-                    epoll.modify(fd, select.EPOLLIN)
-                elif event & select.EPOLLHUP:
-                    # 文件描述符关闭
-                    logging.info("客户端%s关闭" % event_socket.getpeername())
+                    logging.info("服务端关闭连接..")
                     epoll.unregister(fd)
                     fd_to_socket[fd].close()
                     del fd_to_socket[fd]
