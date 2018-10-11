@@ -79,7 +79,7 @@ class TcpServer(object):
                             data = event_socket.recv(self.buf_size)
                             recv_size += len(data)
                             file.write(data)
-                            if len(data) == 6:  # 客户端传finish
+                            if len(data) < self.buf_size:  # 客户端传finish
                                 # 接收完毕
                                 break
                     logging.info("上传完成。文件路径 %s, 接收大小 %d" % (file_path, recv_size))
