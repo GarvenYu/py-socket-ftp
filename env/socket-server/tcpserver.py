@@ -5,14 +5,15 @@ import socket
 import select
 import logging
 import time
+import os
 
 logging.basicConfig(level=logging.INFO,
                     filename='server_connect.log',
                     filemode='a',
                     format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
                     )
-IMG_DIRECTORY = '/home/freesia_blog_edition2/env/app/blogimg/'
-DOMAIN_NAME = 'resource.fre3sia.site'
+IMG_DIRECTORY = '/home/freesia_blog_edition2/env/app/blogimg/'+time.strftime('%Y%m%d',time.localtime(time.time()))+'/'
+DOMAIN_NAME = 'http://resource.fre3sia.site'
 
 
 class TcpServer(object):
@@ -72,6 +73,9 @@ class TcpServer(object):
                     # logging.info("文件大小 %d" % int(file_size.decode('UTF-8')))
                     recv_size = 0
                     file_name = str(int(time.time())) + '.jpg'
+                    if not os.path.exists(IMG_DIRECTORY): 
+                        # 目录不存在
+                        os.mkdir(IMG_DIRECTORY)    
                     file_path = IMG_DIRECTORY + file_name
                     with open(file_path, mode='wb+') as file:
                         while True:
@@ -83,7 +87,7 @@ class TcpServer(object):
                                 # 接收完毕
                                 break
                     logging.info("上传完成。文件路径 %s, 接收大小 %d" % (file_path, recv_size))
-                    self.img_url = DOMAIN_NAME + '/blogimg/' + file_name
+                    self.img_url = DOMAIN_NAME + '/blogimg/'+time.strftime('%Y%m%d',time.localtime(time.time()))+'/'+ file_name
                     epoll.modify(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     # 文件描述符可写
